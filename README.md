@@ -1,30 +1,32 @@
-# Water Management System
+# AquaSense – Water Management System
 
 ## Project Overview
 
-The **Water Management System** is a web-based application developed to monitor and manage water usage efficiently. The system provides an interface for administrators and users to track water consumption, manage related data, and visualize usage information through a dashboard.
+**AquaSense** is a web-based water management application designed to monitor and manage water usage efficiently. The system provides a platform where administrators can track water consumption, monitor usage data, and analyze system information through a structured dashboard.
 
-This project demonstrates the implementation of a full-stack web application using modern web technologies. It focuses on building a structured architecture that separates the frontend and backend components for better scalability and maintainability.
+The main objective of AquaSense is to promote **efficient water monitoring and management** by providing a centralized interface that allows users to view and manage water-related data in a simple and organized way.
+
+This project demonstrates the development of a full-stack web application with a structured separation between frontend and backend components.
 
 ---
 
 # System Architecture
 
-The project follows a **Client–Server architecture** consisting of three main layers.
+The AquaSense application follows a **Client–Server Architecture** consisting of three major layers.
 
 ### 1. Frontend Layer
 
-The frontend is responsible for presenting the user interface and handling user interactions. It is developed using **HTML, CSS, and JavaScript**. The frontend communicates with the backend through HTTP requests to retrieve or submit data.
+The frontend handles the user interface and user interaction. It is developed using **HTML, CSS, and JavaScript**. The frontend allows users to navigate through the application, view dashboards, and interact with system features.
 
 ### 2. Backend Layer
 
-The backend is developed using **Node.js and Express.js**. It handles application logic, API routing, and server-side processing. The backend receives requests from the frontend, processes them, interacts with the database when necessary, and sends responses back to the client.
+The backend is built using **Node.js and Express.js**. It manages the application logic, processes requests received from the frontend, and handles API routing. The backend ensures that data is processed correctly and sent back to the frontend.
 
 ### 3. Database Layer
 
-The database stores application data such as user information, water usage records, and administrative data. The backend communicates with the database to store and retrieve data whenever required.
+The database is responsible for storing application data such as water usage records, system information, and administrative data. The backend communicates with the database to retrieve or store information when required.
 
-Overall data flow:
+Overall system flow:
 
 User → Frontend Interface → Backend APIs → Database
 
@@ -32,35 +34,35 @@ User → Frontend Interface → Backend APIs → Database
 
 # Project Modules
 
-## 1. Authentication Module
+## Authentication Module
 
-This module manages user authentication and access control. It verifies user credentials and ensures that only authorized users can access specific parts of the system.
+This module handles user authentication and access control. It ensures that only authorized users can access system functionalities.
 
-## 2. Admin Module
+## Admin Module
 
-The admin module allows administrators to manage the system. Administrators can view and manage water consumption data and oversee system operations.
+The admin module allows administrators to manage the system and monitor water usage information. It provides tools for managing and reviewing system data.
 
-## 3. Dashboard Module
+## Dashboard Module
 
-The dashboard provides a visual overview of water usage data. It presents information in a structured and easy-to-understand format, allowing administrators to monitor trends and system activity.
+The dashboard displays important information related to water usage in a structured format. It helps users analyze water consumption and monitor system activity.
 
-## 4. Water Monitoring Module
+## Water Monitoring Module
 
-This module handles the tracking and management of water usage data. It allows the system to record consumption details and make them available for analysis through the dashboard.
+This module is responsible for tracking and storing water usage data. It allows the system to maintain records of water consumption for monitoring and analysis.
 
 ---
 
 # APIs Used / Integrated
 
-The system uses **custom REST APIs** created using Express.js to allow communication between the frontend and backend.
+AquaSense uses **custom REST APIs** developed using Express.js to allow communication between the frontend and backend.
 
-Example API endpoints:
+Example API endpoints include:
 
 * `POST /api/auth/login` – Handles user authentication
-* `GET /api/admin/data` – Retrieves data for the admin dashboard
-* `POST /api/water` – Stores water usage information
+* `GET /api/admin/data` – Retrieves dashboard information
+* `POST /api/water` – Stores water usage data
 
-These APIs follow standard HTTP methods to ensure clear communication between system components.
+These APIs follow standard HTTP methods to enable efficient communication between the system components.
 
 ---
 
@@ -87,15 +89,15 @@ These APIs follow standard HTTP methods to ensure clear communication between sy
 
 # Challenges Faced During Development
 
-During the development of this project, several challenges were encountered:
+During the development of AquaSense, several challenges were encountered:
 
-* Designing a clear architecture that separates frontend and backend components.
-* Managing communication between the client interface and server APIs.
-* Organizing project files and modules to maintain a clean project structure.
-* Implementing proper data handling and routing in the backend.
-* Ensuring smooth integration between all modules of the system.
+* Designing a clear architecture for separating frontend and backend components
+* Establishing proper communication between the client interface and server APIs
+* Structuring the project modules for better maintainability
+* Handling API requests and responses efficiently
+* Ensuring proper integration of all system modules
 
-These challenges were addressed through testing, debugging, and collaboration among team members.
+These challenges were addressed through debugging, testing, and collaboration among the team members.
 
 ---
 
@@ -103,19 +105,19 @@ These challenges were addressed through testing, debugging, and collaboration am
 
 The project was developed collaboratively by a team of four members.
 
-| Team Member | Contribution                                     |
-| ----------- | ------------------------------------------------ |
-| Riddhi      | Backend server setup and project structure       |
-| Vedant      | Implementation of backend APIs and routing logic |
-| Parth       | Development of frontend pages and UI layout      |
-| Sarth       | Implementation of frontend scripts and styling   |
+| Team Member | Contribution                                  |
+| ----------- | --------------------------------------------- |
+| Riddhi      | Backend server setup and project structure    |
+| Vedant      | Backend API routes and logic implementation   |
+| Parth       | Frontend page development and UI layout       |
+| Sarth       | Frontend scripting and styling implementation |
 
-Each team member contributed to the planning, development, and testing of the application.
+All team members participated in the design, development, and testing phases of the project.
 
 ---
 
 # Conclusion
 
-The Water Management System demonstrates how a full-stack web application can be designed to manage and monitor resource usage effectively. The project highlights the integration of frontend interfaces with backend services using REST APIs and structured application architecture.
+**AquaSense** demonstrates how a web-based system can be designed to efficiently monitor and manage water usage. The project integrates frontend interfaces with backend APIs using a structured architecture that ensures scalability and maintainability.
 
-The system provides a foundation that can be further expanded with advanced features such as real-time monitoring, mobile application support, and enhanced data analytics in future development.
+The system can be further improved in the future by integrating advanced features such as real-time monitoring, IoT-based sensors for water tracking, and advanced analytics for better water resource management.
