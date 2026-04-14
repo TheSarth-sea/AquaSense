@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AquaSense — Admin Panel</title>
+  <meta name="description" content="AquaSense admin panel — manage users and view platform analytics." />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    .admin-sidebar {
+      width: 260px; flex-shrink: 0;
+      background: rgba(255,255,255,0.04);
+      border-right: 1px solid var(--glass-border);
+      min-height: calc(100vh - 70px);
+      padding: 24px 16px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: 12px;
+      color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all var(--transition);
+      border: 1px solid transparent; text-decoration: none;
+    }
+    .sidebar-item:hover, .sidebar-item.active {
+      background: rgba(0,212,255,0.08); color: var(--water-primary);
+      border-color: rgba(0,212,255,0.15);
+    }
+    .sidebar-item .s-icon { font-size: 1.2rem; width: 28px; text-align: center; }
+    .admin-layout { display: flex; min-height: calc(100vh - 70px); }
+    .admin-content { flex: 1; padding: 28px; overflow-x: hidden; }
+    .section { display: none; }
+    .section.active { display: block; animation: pageEnter 0.4s ease both; }
+    .table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid var(--glass-border); }
+    @media (max-width: 900px) {
+      .admin-sidebar { display: none; }
+      .admin-content { padding: 16px; }
+    }
+    .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 700px) { .platform-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <div id="toast-container"></div>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-wave">🌊</div>
+    <div style="text-align:center">
+      <div class="gradient-text" style="font-size:1.5rem;font-weight:800;">Admin Panel</div>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;">Loading platform data…</p>
+    </div>
+    <div class="loader"></div>
+  </div>
+
+  <div class="wave-container" aria-hidden="true">
+    <svg class="wave wave-1" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,180 L0,180 Z"/>
+    </svg>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- ── NAVBAR ─────────────────────────────────────────────────────────── -->
+    <nav class="navbar">
+      <a href="admin.html" class="nav-brand">
+        <div class="nav-logo" style="background:linear-gradient(135deg,#00ffaa,#00d4ff);">🛡️</div>
+        <span class="nav-title">AquaSense Admin</span>
+      </a>
+      <div class="nav-actions">
+        <span class="badge badge-admin" style="padding:8px 14px;">⚡ Admin</span>
+        <div class="nav-user">
+          <div class="avatar" id="navAvatar" style="background:#00ffaa;">S</div>
+          <span id="navName" style="font-size:0.9rem;font-weight:600;">Sarth</span>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="logout()" title="Sign out">🚪</button>
+      </div>
+    </nav>
+
+    <!-- ── LAYOUT ────────────────────────────────────────────────────────── -->
+    <div class="admin-layout">
+
+      <!-- ── SIDEBAR ───────────────────────────────────────────────────── -->
+      <aside class="admin-sidebar">
+        <div style="padding:0 8px;margin-bottom:16px;">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted)">Navigation</div>
+        </div>
+        <a class="sidebar-item active" onclick="switchSection('overview',this)" href="#">
+          <span class="s-icon">📊</span> Overview
+        </a>
+        <a class="sidebar-item" onclick="switchSection('users',this)" href="#">
+          <span class="s-icon">👥</span> Users
+        </a>
+        <a class="sidebar-item" onclick="switchSection('analytics',this)" href="#">
+          <span class="s-icon">📈</span> Analytics
+        </a>
+        <a class="sidebar-item" onclick="switchSection('leaderboard',this)" href="#">
+          <span class="s-icon">🏆</span> Leaderboard
+        </a>
+        <div style="flex:1"></div>
+        <div style="padding:16px;background:rgba(0,212,255,0.06);border-radius:14px;border:1px solid rgba(0,212,255,0.12);margin-top:auto;">
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">Logged in as</div>
+          <div style="font-weight:700;color:var(--water-primary)" id="adminName">Sarth</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;" id="adminEmail"></div>
+        </div>
+      </aside>
+
+      <!-- ── CONTENT ───────────────────────────────────────────────────── -->
+      <div class="admin-content">
+
+        <!-- ── OVERVIEW SECTION ──────────────────────────────────────── -->
+        <section id="section-overview" class="section active">
+          <div style="margin-bottom:28px;">
+            <h1 style="font-size:1.8rem;margin-bottom:4px;">Platform Overview 📊</h1>
+            <p style="color:var(--text-secondary);">Real-time stats across all AquaSense users</p>
+          </div>
+
+          <!-- Stat Cards -->
+          <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-value" id="statUsers">0</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📝</div>
+              <div class="stat-value" id="statLogs">0</div>
+              <div class="stat-label">Total Logs</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">💧</div>
+              <div class="stat-value" id="statWater">0</div>
+              <div class="stat-label">Total Water (L)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🟢</div>
+              <div class="stat-value" id="statActive">0</div>
+              <div class="stat-label">Active Today</div>
+            </div>
+          </div>
+
+          <!-- Platform Trend Chart -->
+          <div class="glass-card" style="margin-bottom:20px;">
+            <h3 style="margin-bottom:20px;">Platform Activity — Last 30 Days 📈</h3>
+            <div style="height:300px;position:relative">
+              <canvas id="platformChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Row: Growth + Top Users -->
+          <div class="platform-grid">
+            <div class="glass-card">
+              <h3 style="margin-bottom:20px;">User Growth 📈</h3>
+              <div style="height:240px;position:relative">
+                <canvas id="growthChart"></canvas>
+              </div>
+            </div>
+            <div class="glass-card">
+              <h3 style="margin-bottom:16px;">Top Consumers This Week 🏆</h3>
+              <div id="topConsumersList" class="log-timeline">
+                <div class="empty-state"><div class="es-icon">🏆</div><p>Loading…</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── USERS SECTION ─────────────────────────────────────────── -->
+        <section id="section-users" class="section">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
+            <div>
+              <h1 style="font-size:1.8rem;margin-bottom:4px;">User Management 👥</h1>
+              <p style="color:var(--text-secondary);">Manage all registered users</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input class="form-input" type="text" placeholder="Search users…" oninput="searchUsers(this.value)" style="width:250px;" />
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="loadUsers()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding:0;overflow:hidden;">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Daily Goal</th>
+                    <th>Total Water</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">
+                    <span class="loader"></span>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── ANALYTICS SECTION ─────────────────────────────────────── -->
+        <section id="section-analytics" class="section">
+          <div style="margin-bottom:28px;">
+            <h1 style="font-size:1.8rem;margin-bottom:4px;">Deep Analytics 📊</h1>
+            <p style="color:var(--text-secondary);">Detailed platform performance insights</p>
+          </div>
+
+          <div class="platform-grid" style="margin-bottom:20px;">
+            <div class="glass-card">
+              <h3 style="margin-bottom:20px;">Daily Water Volume 💧</h3>
+              <div style="height:260px;position:relative">
+                <canvas id="analyticsWaterChart"></canvas>
+              </div>
+            </div>
+            <div class="glass-card">
+              <h3 style="margin-bottom:20px;">Daily Active Users 👥</h3>
+              <div style="height:260px;position:relative">
+                <canvas id="analyticsUsersChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📊</div>
+              <div class="stat-value" id="avgLogsPerUser">—</div>
+              <div class="stat-label">Avg Logs / User</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">💧</div>
+              <div class="stat-value" id="avgWaterPerUser">—</div>
+              <div class="stat-label">Avg Water / User</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-value" id="engagementRate">—</div>
+              <div class="stat-label">Today's Engagement</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-value" id="peakDate">—</div>
+              <div class="stat-label">Peak Day (30d)</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── LEADERBOARD SECTION ───────────────────────────────────── -->
+        <section id="section-leaderboard" class="section">
+          <div style="margin-bottom:28px;">
+            <h1 style="font-size:1.8rem;margin-bottom:4px;">Leaderboard 🏆</h1>
+            <p style="color:var(--text-secondary);">Top hydrators this week</p>
+          </div>
+
+          <div class="glass-card">
+            <div id="leaderboardList" class="log-timeline">
+              <div class="empty-state"><div class="es-icon">🏆</div><p>Loading leaderboard…</p></div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /admin-content -->
+    </div><!-- /admin-layout -->
+  </div><!-- /page-wrapper -->
+
+  <!-- ── MODALS ─────────────────────────────────────────────────────────────── -->
+
+  <!-- Delete User Modal -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal" style="text-align:center;">
+      <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+      <h3 style="margin-bottom:8px;color:var(--danger)">Delete User</h3>
+      <p style="color:var(--text-secondary);margin-bottom:24px;">
+        Are you sure you want to permanently delete <strong id="deleteUserName" style="color:var(--text-primary)"></strong>?
+        <br><span style="color:var(--danger);font-size:0.85rem;">This action cannot be undone.</span>
+      </p>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="btn btn-danger" style="flex:1" onclick="executeDelete()">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Goal Modal -->
+  <div id="goalEditModal" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h3>Edit Goal 🎯</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('goalEditModal')">✕</button>
+      </div>
+      <p style="color:var(--text-secondary);margin-bottom:8px;">
+        Updating goal for: <strong id="editGoalUserName" style="color:var(--water-primary)"></strong>
+      </p>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">New Daily Goal (ml)</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🎯</span>
+            <input id="editGoalInput" class="form-input" type="number" min="500" max="10000" placeholder="2500" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('editGoalInput').value=2000">2.0L</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('editGoalInput').value=2500">2.5L</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('editGoalInput').value=3000">3.0L</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('editGoalInput').value=3500">3.5L</button>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="saveGoalEdit()" style="width:100%;">
+          💾 Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Sidebar Navigation
+    function switchSection(name, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+      const sec = document.getElementById(`section-${name}`);
+      if (sec) sec.classList.add('active');
+      if (el) el.classList.add('active');
+
+      // Lazy init analytics charts
+      if (name === 'analytics' && adminStats?.platform_daily) {
+        renderAnalyticsCharts(adminStats.platform_daily);
+        renderAnalyticsSummary(adminStats);
+      }
+      if (name === 'leaderboard' && adminStats?.top_consumers) {
+        renderLeaderboard(adminStats.top_consumers);
+      }
+    }
+
+    function renderAnalyticsCharts(data) {
+      if (!data?.length) return;
+      const labels = data.map(d => new Date(d.date).toLocaleDateString([],{month:'short',day:'numeric'}));
+
+      ['analyticsWaterChart','analyticsUsersChart'].forEach(id => {
+        const existing = Chart.getChart(id);
+        if (existing) existing.destroy();
+      });
+
+      // Water Chart
+      const wCtx = document.getElementById('analyticsWaterChart')?.getContext('2d');
+      if (wCtx) {
+        new Chart(wCtx, {
+          type:'bar',
+          data:{ labels, datasets:[{ label:'Total Water (L)', data:data.map(d=>Math.round(d.total_ml/1000)),
+            backgroundColor(c){ const {ctx:g,chartArea:a}=c.chart; if(!a)return 'rgba(0,212,255,0.5)'; const gr=g.createLinearGradient(0,a.bottom,0,a.top); gr.addColorStop(0,'rgba(0,150,199,0.6)'); gr.addColorStop(1,'rgba(0,212,255,0.9)'); return gr; },
+            borderRadius:{topLeft:6,topRight:6}, borderSkipped:false }]},
+          options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{labels:{color:'rgba(232,244,248,0.7)',font:{family:'Outfit',size:11}}}},
+            scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(232,244,248,0.5)',font:{family:'Outfit',size:10},maxRotation:45},border:{display:false}},
+              y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(232,244,248,0.5)',font:{family:'Outfit',size:11},callback:v=>v+'L'},border:{display:false},beginAtZero:true} }}
+        });
+      }
+
+      // Users Chart
+      const uCtx = document.getElementById('analyticsUsersChart')?.getContext('2d');
+      if (uCtx) {
+        new Chart(uCtx, {
+          type:'line',
+          data:{ labels, datasets:[{ label:'Active Users', data:data.map(d=>d.active_users),
+            borderColor:'#00ff88', backgroundColor(c){ const {ctx:g,chartArea:a}=c.chart; if(!a)return 'transparent'; const gr=g.createLinearGradient(0,a.top,0,a.bottom); gr.addColorStop(0,'rgba(0,255,136,0.3)'); gr.addColorStop(1,'rgba(0,255,136,0)'); return gr; },
+            fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#00ff88', borderWidth:2 }]},
+          options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{labels:{color:'rgba(232,244,248,0.7)',font:{family:'Outfit',size:11}}}},
+            scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(232,244,248,0.5)',font:{family:'Outfit',size:10},maxRotation:45},border:{display:false}},
+              y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(232,244,248,0.5)',font:{family:'Outfit',size:11},stepSize:1},border:{display:false},beginAtZero:true} }}
+        });
+      }
+    }
+
+    function renderAnalyticsSummary(data) {
+      const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+      const avgLogs = data.total_users > 0 ? Math.round(data.total_logs / data.total_users) : 0;
+      const avgWater = data.total_users > 0 ? Math.round(data.total_water_ml / data.total_users / 1000 * 10) / 10 : 0;
+      const engagement = data.total_users > 0 ? Math.round(data.active_today / data.total_users * 100) : 0;
+      set('avgLogsPerUser', avgLogs);
+      set('avgWaterPerUser', avgWater + 'L');
+      set('engagementRate', engagement + '%');
+      if (data.platform_daily?.length) {
+        const peak = data.platform_daily.reduce((a,b) => b.total_ml > a.total_ml ? b : a, data.platform_daily[0]);
+        set('peakDate', new Date(peak.date).toLocaleDateString([],{month:'short',day:'numeric'}));
+      }
+    }
+
+    function renderLeaderboard(data) {
+      const el = document.getElementById('leaderboardList');
+      if (!el || !data?.length) return;
+      const medals = ['🥇','🥈','🥉'];
+      el.innerHTML = data.map((u, i) => `
+        <div class="log-item" style="animation-delay:${i*0.07}s;padding:18px;">
+          <div style="font-size:1.5rem;width:36px;text-align:center;font-weight:700">${medals[i]||`${i+1}`}</div>
+          <div class="avatar" style="background:${u.avatar_color||'#00d4ff'};width:44px;height:44px;font-size:1rem">
+            ${u.name.charAt(0).toUpperCase()}
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:1rem;color:var(--text-primary)">${u.name}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted)">${u.logs} logs this week</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--water-primary)">${u.total_ml>=1000?(u.total_ml/1000).toFixed(1)+'L':u.total_ml+'ml'}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">7-day total</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Admin info
+    document.addEventListener('DOMContentLoaded', () => {
+      const u = JSON.parse(localStorage.getItem('aq_user')||'{}');
+      const ae = document.getElementById('adminEmail');
+      const an = document.getElementById('adminName');
+      if (ae) ae.textContent = u.email||'';
+      if (an) an.textContent = u.name||'Admin';
+    });
+  </script>
+</body>
+</html>
