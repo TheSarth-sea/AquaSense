@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AquaSense — Dashboard</title>
+  <meta name="description" content="Track your daily water intake, view analytics, and hit your hydration goals with AquaSense." />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <canvas id="confettiCanvas" style="position:fixed;inset:0;z-index:9000;pointer-events:none;display:none;"></canvas>
+  <div id="toast-container"></div>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-wave">🌊</div>
+    <div style="text-align:center">
+      <div class="gradient-text" style="font-size:1.5rem;font-weight:800;">AquaSense</div>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;">Loading your data…</p>
+    </div>
+    <div class="loader"></div>
+  </div>
+
+  <!-- Wave Background -->
+  <div class="wave-container" aria-hidden="true">
+    <svg class="wave wave-1" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,180 L0,180 Z"/>
+    </svg>
+    <svg class="wave wave-2" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,90 C360,30 720,150 1080,90 C1260,60 1380,120 1440,90 L1440,180 L0,180 Z"/>
+    </svg>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- ── NAVBAR ─────────────────────────────────────────────────────────── -->
+    <nav class="navbar">
+      <a href="dashboard.html" class="nav-brand">
+        <div class="nav-logo">💧</div>
+        <span class="nav-title">AquaSense</span>
+      </a>
+      <div class="nav-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openModal('goalModal')" id="goalNavBtn">
+          🎯 Set Goal
+        </button>
+        <div class="nav-user" onclick="openModal('profileModal')">
+          <div class="avatar" id="navAvatar" style="background:#00d4ff;">S</div>
+          <span id="navName" style="font-size:0.9rem;font-weight:600;">User</span>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="logout()" title="Sign out">🚪</button>
+      </div>
+    </nav>
+
+    <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
+    <main class="main-content page-enter">
+
+      <!-- ── TOP STATS ROW ─────────────────────────────────────────────── -->
+      <div class="stats-grid stagger-1" style="margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-icon">💧</div>
+          <div class="stat-value" id="todayTotal">0ml</div>
+          <div class="stat-label">Today's Intake</div>
+          <div class="stat-sub">Goal: <span id="dailyGoal">2.5L</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="statStreak">0🔥</div>
+          <div class="stat-label">Day Streak</div>
+          <div class="stat-sub">Keep it going!</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="statWeekAvg">—</div>
+          <div class="stat-label">Weekly Average</div>
+          <div class="stat-sub">Per day</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-value" id="statBest">—</div>
+          <div class="stat-label">Personal Best</div>
+          <div class="stat-sub">Single day record</div>
+        </div>
+      </div>
+
+      <!-- ── DASHBOARD GRID ────────────────────────────────────────────── -->
+      <div class="dashboard-grid">
+
+        <!-- ── LEFT COLUMN ──────────────────────────────────────────────── -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Water Gauge -->
+          <div class="glass-card glow stagger-2" style="text-align:center;">
+            <h3 style="margin-bottom:20px;">Today's Progress</h3>
+            <div class="water-gauge-wrap">
+              <div class="water-gauge glow-pulse">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                  <defs>
+                    <linearGradient id="gaugeGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%"   stop-color="#0096c7"/>
+                      <stop offset="50%"  stop-color="#00d4ff"/>
+                      <stop offset="100%" stop-color="#90e0ef"/>
+                    </linearGradient>
+                  </defs>
+                  <circle class="gauge-track" cx="100" cy="100" r="90"/>
+                  <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="90"/>
+                </svg>
+                <div class="gauge-center">
+                  <div class="gauge-pct" id="gaugePct">0%</div>
+                  <div class="gauge-label">hydrated</div>
+                </div>
+              </div>
+              <div class="gauge-sub" id="gaugeSub">0ml / 2500ml</div>
+              <div class="gauge-drops">
+                <span class="drop">💧</span>
+                <span class="drop">💧</span>
+                <span class="drop">💧</span>
+                <span class="drop">💧</span>
+                <span class="drop">💧</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="margin-top:20px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">
+                <span>Progress</span>
+                <span id="gaugePct2">0%</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Log -->
+          <div class="glass-card stagger-2">
+            <h3 style="margin-bottom:16px;">Quick Log 💧</h3>
+
+            <!-- Drink Type -->
+            <div style="margin-bottom:14px;">
+              <div class="form-label" style="margin-bottom:8px;">Drink Type</div>
+              <div class="drink-chips">
+                <span class="drink-chip active" onclick="selectDrink(this,'water')">💧 Water</span>
+                <span class="drink-chip" onclick="selectDrink(this,'tea')">🍵 Tea</span>
+                <span class="drink-chip" onclick="selectDrink(this,'juice')">🥤 Juice</span>
+                <span class="drink-chip" onclick="selectDrink(this,'coffee')">☕ Coffee</span>
+                <span class="drink-chip" onclick="selectDrink(this,'milk')">🥛 Milk</span>
+                <span class="drink-chip" onclick="selectDrink(this,'sports')">⚡ Sports</span>
+              </div>
+            </div>
+
+            <!-- Quick Buttons -->
+            <div class="quick-log-grid">
+              <button class="quick-log-btn" onclick="quickLog(100)">
+                <span class="q-icon">💧</span>
+                <span style="font-weight:700">100 ml</span>
+                <span class="q-label">Shot glass</span>
+              </button>
+              <button class="quick-log-btn" onclick="quickLog(250)">
+                <span class="q-icon">🥛</span>
+                <span style="font-weight:700">250 ml</span>
+                <span class="q-label">Cup</span>
+              </button>
+              <button class="quick-log-btn" onclick="quickLog(500)">
+                <span class="q-icon">🍶</span>
+                <span style="font-weight:700">500 ml</span>
+                <span class="q-label">Bottle</span>
+              </button>
+              <button class="quick-log-btn" onclick="openModal('customLogModal')">
+                <span class="q-icon">✏️</span>
+                <span style="font-weight:700">Custom</span>
+                <span class="q-label">Any amount</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Drink Breakdown -->
+          <div class="glass-card stagger-3">
+            <h3 style="margin-bottom:16px;">Drink Breakdown 📊</h3>
+            <div id="drinkBreakdown">
+              <div class="empty-state"><div class="es-icon">📊</div><p>Log drinks to see breakdown</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RIGHT COLUMN ─────────────────────────────────────────────── -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- History Chart -->
+          <div class="glass-card stagger-2">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+              <h3>Intake History 📈</h3>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost btn-sm period-btn active" onclick="changePeriod(7,this)">7D</button>
+                <button class="btn btn-ghost btn-sm period-btn" onclick="changePeriod(14,this)">14D</button>
+                <button class="btn btn-ghost btn-sm period-btn" onclick="changePeriod(30,this)">30D</button>
+              </div>
+            </div>
+            <div style="height:260px;position:relative;">
+              <canvas id="historyChart"></canvas>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:0.8rem;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,#0096c7,#00d4ff)"></span>
+                <span style="color:var(--text-muted)">Intake</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:12px;height:4px;border-radius:3px;background:#ffb347;"></span>
+                <span style="color:var(--text-muted)">Goal</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(0,255,136,0.85)"></span>
+                <span style="color:var(--text-muted)">Goal met ✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row: Donut + Hourly -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div class="glass-card stagger-3">
+              <h3 style="margin-bottom:16px;font-size:1rem;">Weekly Goals 🎯</h3>
+              <div style="height:220px;position:relative">
+                <canvas id="donutChart"></canvas>
+              </div>
+            </div>
+            <div class="glass-card stagger-3">
+              <h3 style="margin-bottom:16px;font-size:1rem;">Today by Hour ⏰</h3>
+              <div style="height:220px;position:relative">
+                <canvas id="hourlyChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Logs Timeline -->
+          <div class="glass-card stagger-4">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <h3>Today's Logs 📋</h3>
+              <span style="font-size:0.8rem;color:var(--text-muted);" id="logCount">0 entries</span>
+            </div>
+            <div class="log-timeline" id="logList">
+              <div class="empty-state"><div class="es-icon">💧</div><p>No logs yet today.<br>Start tracking above!</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── MODALS ─────────────────────────────────────────────────────────────── -->
+
+  <!-- Custom Log Modal -->
+  <div id="customLogModal" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h3>Log Custom Amount 💧</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('customLogModal')">✕</button>
+      </div>
+      <form id="customLogForm" onsubmit="handleCustomLog(event)">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (ml)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">💧</span>
+              <input id="customAmount" class="form-input" type="number" min="1" max="5000" placeholder="e.g. 350" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Drink Type</label>
+            <select id="customDrink" class="form-input">
+              <option value="water">💧 Water</option>
+              <option value="tea">🍵 Tea</option>
+              <option value="juice">🥤 Juice</option>
+              <option value="coffee">☕ Coffee</option>
+              <option value="milk">🥛 Milk</option>
+              <option value="sports">⚡ Sports Drink</option>
+              <option value="other">🫗 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (optional)</label>
+            <input id="customNote" class="form-input" type="text" placeholder="e.g. After workout" maxlength="80"/>
+          </div>
+          <button class="btn btn-primary btn-lg" type="submit" style="width:100%;">
+            💧 Log Intake
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Goal Modal -->
+  <div id="goalModal" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h3>Update Daily Goal 🎯</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('goalModal')">✕</button>
+      </div>
+      <form onsubmit="handleGoalUpdate(event)">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <p style="color:var(--text-secondary);font-size:0.9rem;">Set your daily water intake goal. The WHO recommends 2–3L per day for adults.</p>
+          <div class="form-group">
+            <label class="form-label">Daily Goal (ml)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🎯</span>
+              <input id="goalInput" class="form-input" type="number" min="500" max="10000" placeholder="2500" required />
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('goalInput').value=1500">1.5L</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('goalInput').value=2000">2.0L</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('goalInput').value=2500">2.5L</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('goalInput').value=3000">3.0L</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('goalInput').value=3500">3.5L</button>
+          </div>
+          <button class="btn btn-primary btn-lg" type="submit" style="width:100%;">
+            🎯 Save Goal
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profileModal" class="modal-overlay">
+    <div class="modal" style="text-align:center;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('profileModal')">✕</button>
+      </div>
+      <div id="profileAvatar" class="avatar" style="width:72px;height:72px;font-size:1.8rem;margin:0 auto 16px;border:3px solid rgba(0,212,255,0.3);"></div>
+      <h2 id="profileName" style="margin-bottom:4px;">User</h2>
+      <p id="profileEmail" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:24px;"></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:14px;">
+          <div style="font-size:1.2rem;font-weight:700;color:var(--water-primary)" id="profileGoal">—</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">Daily Goal</div>
+        </div>
+        <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:14px;">
+          <div style="font-size:1.2rem;font-weight:700;color:var(--success)" id="profileJoined">—</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">Member Since</div>
+        </div>
+      </div>
+      <button class="btn btn-danger" style="width:100%;" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    // Extra DOM wiring after dashboard.js loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // Period button styling
+      const style = document.createElement('style');
+      style.textContent = `.period-btn.active{background:rgba(0,212,255,0.15);border-color:var(--water-primary);color:var(--water-primary);}`;
+      document.head.appendChild(style);
+
+      // Log count update observer
+      const logList = document.getElementById('logList');
+      const logCount = document.getElementById('logCount');
+      const observer = new MutationObserver(() => {
+        const items = logList.querySelectorAll('.log-item').length;
+        if (logCount) logCount.textContent = `${items} ${items === 1 ? 'entry' : 'entries'}`;
+      });
+      if (logList) observer.observe(logList, { childList: true });
+
+      // Sync gauge progress to label
+      const origSetWidth = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype,'width');
+
+      // Profile modal population
+      document.getElementById('profileModal').addEventListener('transitionend', () => {});
+      document.querySelector('[onclick="openModal(\'profileModal\')"]')?.addEventListener('click', () => {
+        const u = JSON.parse(localStorage.getItem('aq_user') || '{}');
+        const pa = document.getElementById('profileAvatar');
+        const pn = document.getElementById('profileName');
+        const pe = document.getElementById('profileEmail');
+        const pg = document.getElementById('profileGoal');
+        const pj = document.getElementById('profileJoined');
+        if (pa) { pa.style.background = u.avatar_color||'#00d4ff'; pa.textContent = (u.name||'U').charAt(0).toUpperCase(); }
+        if (pn) pn.textContent = u.name||'User';
+        if (pe) pe.textContent = u.email||'';
+        if (pg) pg.textContent = u.daily_goal ? (u.daily_goal >= 1000 ? (u.daily_goal/1000).toFixed(1)+'L' : u.daily_goal+'ml') : '—';
+        if (pj) pj.textContent = u.created_at ? new Date(u.created_at).toLocaleDateString([],{month:'short',year:'numeric'}) : '—';
+      });
+
+      // Progress label sync
+      const progressBar = document.getElementById('progressBar');
+      const gaugePct2 = document.getElementById('gaugePct2');
+      const origUpdate = window.updateGauge;
+      window.updateGauge = function(pct) {
+        if (gaugePct2) gaugePct2.textContent = `${Math.round(Math.min(pct,100))}%`;
+        if (typeof origUpdate === 'function') origUpdate(pct);
+      };
+
+      // Donut chart init after history loads
+      const origHistory = window.updateHistoryChart;
+      window.updateHistoryChart = function(data) {
+        if (typeof origHistory === 'function') origHistory(data);
+        if (data?.length) initDonutChart(data);
+      };
+    });
+  </script>
+</body>
+</html>
