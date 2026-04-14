@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AquaSense — Track Your Water Intake</title>
+  <meta name="description" content="AquaSense helps you monitor and reduce your daily water consumption with beautiful analytics and smart tracking." />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <div id="toast-container"></div>
+
+  <!-- Animated Wave Layers -->
+  <div class="wave-container" aria-hidden="true">
+    <svg class="wave wave-1" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,180 L0,180 Z"/>
+    </svg>
+    <svg class="wave wave-2" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,90 C360,30 720,150 1080,90 C1260,60 1380,120 1440,90 L1440,180 L0,180 Z"/>
+    </svg>
+    <svg class="wave wave-3" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <path d="M0,120 C180,60 360,150 540,120 C720,90 900,150 1080,120 C1260,90 1380,150 1440,120 L1440,180 L0,180 Z"/>
+    </svg>
+  </div>
+
+  <!-- Floating Bubbles -->
+  <div class="bubbles-container" id="bubblesContainer" aria-hidden="true"></div>
+
+  <div class="page-wrapper" style="display:flex; align-items:center; justify-content:center; min-height:100vh; padding:40px 20px;">
+
+    <div style="width:100%; max-width:440px;">
+
+      <!-- Brand Header -->
+      <div style="text-align:center; margin-bottom:40px;" class="page-enter">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;background:linear-gradient(135deg,#00d4ff,#0096c7);border-radius:20px;font-size:2rem;margin-bottom:18px;box-shadow:0 8px 32px rgba(0,212,255,0.4);" class="glow-pulse">
+          💧
+        </div>
+        <h1 style="font-size:2.4rem;font-weight:900;margin-bottom:6px;">
+          <span class="gradient-text">AquaSense</span>
+        </h1>
+        <p style="color:var(--text-secondary);font-size:0.95rem;">Track. Reduce. Thrive. 🌊</p>
+      </div>
+
+      <!-- LOGIN CARD -->
+      <div id="login-card" class="glass-card auth-card glow" style="margin-bottom:16px;">
+        <h2 style="margin-bottom:6px;font-size:1.5rem;">Welcome back 👋</h2>
+        <p style="font-size:0.875rem;margin-bottom:28px;color:var(--text-secondary);">Sign in to continue your hydration journey</p>
+
+        <form id="login-form" autocomplete="on" novalidate>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input id="login-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-pass">Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input id="login-pass" class="form-input" type="password" placeholder="••••••••" autocomplete="current-password" required />
+                <button type="button" onclick="togglePass('login-pass',this)" style="position:absolute;right:14px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:4px;">👁️</button>
+              </div>
+            </div>
+            <button id="login-btn" class="btn btn-primary btn-lg" type="submit" style="width:100%;margin-top:8px;">
+              🌊 Sign In
+            </button>
+          </div>
+        </form>
+
+        <div class="divider" style="margin:24px 0;">or</div>
+        <p style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">
+          Don't have an account?
+          <button onclick="toggleForm()" style="background:none;border:none;color:var(--water-primary);font-weight:600;cursor:pointer;font-size:0.875rem;font-family:'Outfit',sans-serif;">
+            Create one →
+          </button>
+        </p>
+      </div>
+
+      <!-- REGISTER CARD -->
+      <div id="register-card" class="glass-card auth-card glow" style="display:none;margin-bottom:16px;">
+        <h2 style="margin-bottom:6px;font-size:1.5rem;">Join AquaSense 🚀</h2>
+        <p style="font-size:0.875rem;margin-bottom:28px;color:var(--text-secondary);">Start your hydration tracking journey today</p>
+
+        <form id="register-form" autocomplete="on" novalidate>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Full Name</label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input id="reg-name" class="form-input" type="text" placeholder="Your name" autocomplete="name" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-email">Email</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input id="reg-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-pass">Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input id="reg-pass" class="form-input" type="password" placeholder="Min 6 characters" autocomplete="new-password" required />
+                <button type="button" onclick="togglePass('reg-pass',this)" style="position:absolute;right:14px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:4px;">👁️</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-confirm">Confirm Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔑</span>
+                <input id="reg-confirm" class="form-input" type="password" placeholder="Repeat password" autocomplete="new-password" required />
+              </div>
+            </div>
+            <button id="reg-btn" class="btn btn-primary btn-lg" type="submit" style="width:100%;margin-top:8px;">
+              🚀 Create Account
+            </button>
+          </div>
+        </form>
+
+        <div class="divider" style="margin:24px 0;">or</div>
+        <p style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">
+          Already have an account?
+          <button onclick="toggleForm()" style="background:none;border:none;color:var(--water-primary);font-weight:600;cursor:pointer;font-size:0.875rem;font-family:'Outfit',sans-serif;">
+            Sign in →
+          </button>
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <p style="text-align:center;color:var(--text-muted);font-size:0.78rem;margin-top:20px;">
+        💙 AquaSense — Stay hydrated, stay healthy
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // Password toggle
+    function togglePass(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+      else { input.type = 'password'; btn.textContent = '👁️'; }
+    }
+
+    // Spawning bubbles
+    function spawnBubbles() {
+      const container = document.getElementById('bubblesContainer');
+      for (let i = 0; i < 18; i++) {
+        setTimeout(() => {
+          const b = document.createElement('div');
+          b.className = 'bubble';
+          const size = Math.random() * 20 + 6;
+          b.style.cssText = `
+            width:${size}px; height:${size}px;
+            left:${Math.random()*100}%;
+            animation-duration:${Math.random()*10+8}s;
+            animation-delay:${Math.random()*8}s;
+          `;
+          container.appendChild(b);
+        }, i * 200);
+      }
+    }
+    spawnBubbles();
+  </script>
+</body>
+</html>
