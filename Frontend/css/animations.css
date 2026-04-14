@@ -1,0 +1,273 @@
+/* ─── Water Fill Gauge ───────────────────────────────────────────────────── */
+.water-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.water-gauge {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.gauge-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 14;
+}
+
+.gauge-fill {
+  fill: none;
+  stroke: url(#gaugeGradient);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: 565;
+  stroke-dashoffset: 565;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.6));
+}
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.gauge-pct {
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--water-primary), var(--wave-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gauge-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gauge-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+  font-weight: 500;
+}
+
+.gauge-drops {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.drop {
+  font-size: 1.2rem;
+  transition: all 0.4s ease;
+  filter: grayscale(0.7);
+}
+
+.drop.active {
+  filter: none;
+  animation: dropBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes dropBounce {
+  0%   { transform: scale(0.5); }
+  70%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* ─── Canvas Particles / Waves ───────────────────────────────────────────── */
+.wave-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  height: 180px;
+}
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: -200px;
+  width: calc(100% + 400px);
+  height: 100%;
+}
+
+.wave path {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.wave-1 path { fill: rgba(0,212,255,0.06); animation: waveMove1 8s linear infinite; }
+.wave-2 path { fill: rgba(0,150,199,0.05); animation: waveMove2 12s linear infinite; }
+.wave-3 path { fill: rgba(72,202,228,0.04); animation: waveMove3 16s linear infinite; }
+
+@keyframes waveMove1 {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(200px); }
+}
+
+@keyframes waveMove2 {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-200px); }
+}
+
+@keyframes waveMove3 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(150px); }
+  100% { transform: translateX(0); }
+}
+
+/* ─── Ripple Effect ──────────────────────────────────────────────────────── */
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.3);
+  transform: scale(0);
+  animation: ripple 0.7s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ─── Floating Bubbles ───────────────────────────────────────────────────── */
+.bubbles-container {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -50px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 212, 255, 0.4), rgba(0, 150, 199, 0.1));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  animation: bubbleRise linear infinite;
+}
+
+@keyframes bubbleRise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-100vh) translateX(30px); opacity: 0; }
+}
+
+/* ─── Page Entrance Animation ────────────────────────────────────────────── */
+.page-enter { animation: pageEnter 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* ─── Glow Pulse ─────────────────────────────────────────────────────────── */
+.glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+  50%       { box-shadow: 0 0 40px rgba(0, 212, 255, 0.5), 0 0 80px rgba(0, 212, 255, 0.2); }
+}
+
+/* ─── Number Counter Animation ───────────────────────────────────────────── */
+.count-up { transition: all 0.8s ease; }
+
+/* ─── Streak Badge Animation ─────────────────────────────────────────────── */
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, rgba(255, 179, 71, 0.15), rgba(255, 130, 0, 0.1));
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 50px;
+  animation: streakGlow 2s ease-in-out infinite;
+}
+
+@keyframes streakGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(255, 179, 71, 0.2); }
+  50%       { box-shadow: 0 0 25px rgba(255, 179, 71, 0.45); }
+}
+
+/* ─── Goal Reached Celebration ───────────────────────────────────────────── */
+.goal-reached {
+  animation: celebrate 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes celebrate {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.08); }
+  70%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+/* ─── Skeleton Loading ───────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.1) 50%,
+    rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-wave {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Auth Page Animations ───────────────────────────────────────────────── */
+.auth-card {
+  animation: authCardIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes authCardIn {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.form-switch { animation: formSwitch 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+@keyframes formSwitch {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Hover Float ────────────────────────────────────────────────────────── */
+.hover-float {
+  transition: transform var(--transition);
+}
+.hover-float:hover { transform: translateY(-5px); }
+
+/* ─── Icon Spin ──────────────────────────────────────────────────────────── */
+.icon-spin { animation: spin 1s linear infinite; }
