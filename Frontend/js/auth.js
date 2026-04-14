@@ -1,5 +1,7 @@
-// ─── Config ──────────────────────────────────────────────────────────────────
-const API = 'http://localhost:3000/api';
+
+const API = (window.location.protocol === 'file:' || window.location.port === '5500') 
+  ? 'http://localhost:3000/api' 
+  : '/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const token = () => localStorage.getItem('aq_token');
